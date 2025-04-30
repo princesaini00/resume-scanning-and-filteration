@@ -3,8 +3,8 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="bg-gray-100 text-center text-sm">
-      {/* Links for About, Privacy Policy, Contact, and Sign In/Sign Up */}
-      <div className="mb-4 space-x-4 py-4">
+      {/* Links for About, Privacy Policy, Contact, and Sign In/Sign Up - Mobile responsive grid */}
+      <div className="grid grid-cols-2 md:block md:space-x-4 gap-y-2 py-4 px-4">
         <a
           href="https://www.mahindra.com/about-us"
           target="_blank"
@@ -13,7 +13,7 @@ export default function Footer() {
         >
           About Mahindra
         </a>
-        <span>|</span>
+        <span className="hidden md:inline">|</span>
         <a
           href="https://www.mahindra.com/privacy-policy"
           target="_blank"
@@ -22,7 +22,7 @@ export default function Footer() {
         >
           Privacy Policy
         </a>
-        <span>|</span>
+        <span className="hidden md:inline">|</span>
         <a
           href="https://www.mahindra.com/contact-us"
           target="_blank"
@@ -31,7 +31,7 @@ export default function Footer() {
         >
           Contact
         </a>
-        <span>|</span>
+        <span className="hidden md:inline">|</span>
         <a
           href="https://www.mahindra.com/terms-of-use"
           target="_blank"
@@ -39,7 +39,7 @@ export default function Footer() {
           className="hover:text-red-500 transition">
           Terms of Use
         </a>
-        <span>|</span>
+        <span className="hidden md:inline">|</span>
         <a
           href="https://www.mahindra.com/careers"
           target="_blank"
@@ -47,7 +47,7 @@ export default function Footer() {
           className="hover:text-red-500 transition">
           Careers
         </a>
-        <span>|</span>
+        <span className="hidden md:inline">|</span>
         <Link
           href="/login"
           className="hover:text-red-500 transition"
@@ -96,8 +96,8 @@ export default function Footer() {
       </div>
 
       {/* Copyright Section */}
-      <div className="bg-red-500 text-white h-12 grid place-items-center">
-        <p>Copyright&copy; 2025 Mahindra & Mahindra Pvt Ltd. All Rights Reserved.</p>
+      <div className="bg-red-500 text-white py-3 px-4 md:h-12 md:py-0 grid place-items-center">
+        <p className="text-xs md:text-sm">Copyright&copy; 2025 Mahindra & Mahindra Pvt Ltd. All Rights Reserved.</p>
       </div>
     </footer>
   );

@@ -1,133 +1,52 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import Link from "next/link"; // For the back button
-import UploadNavbar from "../../upload-resume/components/UploadNavbar"; // Import the navbar
-import { FaClock, FaCalendarAlt, FaMoneyBillAlt, FaMapMarkerAlt, FaBriefcase, FaEnvelope, FaLinkedin, FaTwitter } from "react-icons/fa"; // Icons
-import { useEffect, useState } from "react"; // For loading state and API calls
-import ApplyForm from "@/app/upload-resume/components/ApplyForm";
-import SuccessModal from "@/app/upload-resume/components/SuccessModal";
+import Link from "next/link";
+import UploadNavbar from "../../upload-resume/components/UploadNavbar";
+import { FaCalendarAlt, FaMoneyBillAlt, FaMapMarkerAlt, FaEnvelope } from "react-icons/fa";
+import { useEffect, useState } from "react";
 
-// Mock data for job details (replace with actual API call)
-const jobDetails = {
-  "1": {
-    title: "Software Engineer Intern",
-    company: {
-      name: "Tech Mahindra",
-      about: "Tech Mahindra is a leading provider of digital transformation, consulting, and business re-engineering services. We are a USD 5.2 billion company with 145,000+ professionals across 90 countries.",
-      socialMedia: {
-        linkedin: "https://linkedin.com/company/tech-mahindra",
-        twitter: "https://twitter.com/tech_mahindra",
-      },
-    },
-    location: "Remote",
-    posted: "Posted 5 days ago",
-    type: "Full time",
-    deadline: "February 16, 2026",
-    salary: "20,000 monthly",
-    description:
-      "We are seeking a Software Engineer Intern with expertise in different software development models and web monitoring to join Mahindra Rise dynamic software development team. The ideal candidate will have a deep understanding of software engineering principles, threat detection methodologies, and hands-on experience in managing security incidents.",
-    responsibilities: [
-      "Design and Development: Develop, maintain, and enhance web applications using C#, Asp .Net, MVC, Angular, Web API, SQL Server. Write clean, scalable, and maintainable code.",
-      "Frontend Development: Build intuitive user interfaces and ensure responsiveness and performance using Angular, JavaScript, jQuery, HTML, CSS, Bootstrap.",
-    ],
-    skills: [
-      "Proficiency in C#, Asp .Net, MVC, Angular, and SQL Server.",
-      "Strong understanding of frontend technologies like JavaScript, jQuery, HTML, and CSS.",
-      "Experience with RESTful APIs and web services.",
-      "Knowledge of software development best practices and version control systems like Git.",
-    ],
-    contact: {
-      email: "careers@techmahindra.com",
-      phone: "+1 (123) 456-7890",
-    },
-  },
-  // Add more job details as needed
-};
-
-
-// Define the type for job details
 type JobDetails = {
+  _id: string;
   title: string;
-  company: {
-    name: string;
-    about: string;
-    socialMedia: {
-      linkedin: string;
-      twitter: string;
-    };
-  };
+  company: string;
   location: string;
-  posted: string;
-  type: string;
   deadline: string;
   salary: string;
-  description: string;
+  shortDescription: string;
+  detailedDescription: string;
   responsibilities: string[];
   skills: string[];
-  contact: {
-    email: string;
-    phone: string;
-  };
+  contactEmail: string;
+  contactPhone: string;
 };
 
 export default function JobDetailsPage() {
-  const params = useParams();
-  const jobId = params.id as string;
+  const { id: jobId } = useParams();
 
   const [job, setJob] = useState<JobDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingJob, setLoadingJob] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [showApplyForm, setShowApplyForm] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<any>(null);
-
-  const openForm = (job: any) => {
-    setSelectedJob(job);
-    setShowApplyForm(true);
-  };
-
-  const closeForm = () => {
-    setShowApplyForm(false);
-    setSelectedJob(null);
-  };
-
-  const handleFormSubmit = () => {
-    setShowApplyForm(false); // Close the ApplyForm
-    setShowSuccessModal(true); // Show the SuccessModal
-  };
-
-  const closeSuccessModal = () => {
-    setShowSuccessModal(false); // Close the SuccessModal
-  };
-
-  // Simulate fetching job details from an API
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
-        // Replace with actual API call
-        const data = jobDetails[jobId as keyof typeof jobDetails] as JobDetails | undefined;
-        if (!data) {
-          throw new Error("Job not found");
-        }
+        const response = await fetch(`/api/jobs/${jobId}`);
+        if (!response.ok) throw new Error("Job not found");
+        const data = await response.json();
         setJob(data);
       } catch (err) {
-        // Narrow down the type of 'err'
-        if (err instanceof Error) {
-          setError(err.message); // Access 'err.message' safely
-        } else {
-          setError("An unknown error occurred"); // Handle non-Error types
-        }
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
-        setLoading(false);
+        setLoadingJob(false);
       }
     };
-  
+
     fetchJobDetails();
   }, [jobId]);
-  
-  if (loading) {
+
+
+  if (loadingJob) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
@@ -135,149 +54,86 @@ export default function JobDetailsPage() {
     );
   }
 
-  if (error) {
+  if (error || !job) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <p className="text-red-500 text-5xl">{error}</p>
+        <p className="text-red-500 text-xl sm:text-2xl px-4 text-center">{error || "Job not found"}</p>
       </div>
     );
   }
 
-  if (!job) {
-    return <div>Job not found</div>;
-  }
-
   return (
     <>
-    <div className={`transition-all duration-300 ${showApplyForm || showSuccessModal ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
-      {/* Navbar */}
-      <UploadNavbar />
+        <UploadNavbar />
+        <div className="p-4 sm:p-6 md:p-10 bg-gray-50 min-h-screen">
+          <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-4 sm:p-6 md:p-8">
+            <Link href="/upload-resume" className="text-gray-600 hover:text-red-500 transition mb-4 items-center text-sm sm:text-base inline-block">
+              ← Back to Jobs
+            </Link>
 
-      {/* Job Details Section */}
-      <div className="p-10 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-          {/* Back Button */}
-          <Link
-            href="/upload-resume"
-            className="text-gray-600 hover:text-red-500 transition mb-4 inline-block flex items-center"
-          >
-            ← Back to Jobs
-          </Link>
-
-          {/* Company Logo and Name */}
-          <div className="flex items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">{job.company.name}</h2>
-          </div>
-
-          {/* Job Title */}
-          <h1 className="text-3xl font-bold text-red-500 mb-4">{job.title}</h1>
-
-          {/* Job Metadata with Icons */}
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center text-gray-700">
-              <FaMapMarkerAlt className="mr-2 text-gray-500" />
-              <span className="font-semibold">Location: </span> {job.location}
+            <div className="flex items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{job.company}</h2>
             </div>
-            <div className="flex items-center text-gray-700">
-              <FaClock className="mr-2 text-gray-500" />
-              <span className="font-semibold">Posted: </span> {job.posted}
-            </div>
-            <div className="flex items-center text-gray-700">
-              <FaCalendarAlt className="mr-2 text-gray-500" />
-              <span className="font-semibold">End Date: </span> {job.deadline}
-            </div>
-            <div className="flex items-center text-gray-700">
-              <FaMoneyBillAlt className="mr-2 text-gray-500" />
-              <span className="font-semibold">Salary: </span> {job.salary}
-            </div>
-            <div className="flex items-center text-gray-700">
-              <FaBriefcase className="mr-2 text-gray-500" />
-              <span className="font-semibold">Job Type: </span> {job.type}
-            </div>
-          </div>
 
-          {/* Apply Button */}
-          <button  onClick={() => openForm(job)} className="bg-red-500 text-white px-10 py-2 rounded-lg shadow-md hover:bg-red-600 transition mb-8">
-            Apply
-          </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-red-500 mb-3 sm:mb-4 break-words">{job.title}</h1>
 
-          {/* Job Description */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Job Description</h2>
-            <p className="text-gray-700">{job.description}</p>
-          </div>
-
-          {/* Key Responsibilities */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Key Responsibilities</h2>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              {job.responsibilities.map((responsibility, index) => (
-                <li key={index}>{responsibility}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Skills Required */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Skills Required</h2>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              {job.skills.map((skill, index) => (
-                <li key={index}>{skill}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* About the Company */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">About the Company</h2>
-            <p className="text-gray-700">{job.company.about}</p>
-          </div>
-
-          {/* Contact Information */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Information</h2>
-            <div className="space-y-2">
-              <div className="flex items-center text-gray-700">
-                <FaEnvelope className="mr-2 text-gray-500" />
-                <span>{job.contact.email}</span>
+            <div className="space-y-2 sm:space-y-3 mb-5 sm:mb-6">
+              <div className="flex items-center text-gray-700 text-sm sm:text-base">
+                <FaMapMarkerAlt className="mr-2 text-gray-500 flex-shrink-0" />
+                <span className="font-semibold">Location:</span>&nbsp;{job.location}
               </div>
-              <div className="flex items-center text-gray-700">
-                <FaEnvelope className="mr-2 text-gray-500" />
-                <span>{job.contact.phone}</span>
+              <div className="flex items-center text-gray-700 text-sm sm:text-base">
+                <FaCalendarAlt className="mr-2 text-gray-500 flex-shrink-0" />
+                <span className="font-semibold">Deadline:</span>&nbsp;{job.deadline}
+              </div>
+              <div className="flex items-center text-gray-700 text-sm sm:text-base">
+                <FaMoneyBillAlt className="mr-2 text-gray-500 flex-shrink-0" />
+                <span className="font-semibold">Salary:</span>&nbsp;{job.salary}
               </div>
             </div>
-          </div>
 
-          {/* Social Media Links */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Follow Us</h2>
-            <div className="flex space-x-4">
-              <a
-                href={job.company.socialMedia.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 hover:text-red-500 transition"
-              >
-                <FaLinkedin size={24} />
-              </a>
-              <a
-                href={job.company.socialMedia.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 hover:text-red-500 transition"
-              >
-                <FaTwitter size={24} />
-              </a>
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Job Description</h2>
+              <p className="text-gray-700 text-sm sm:text-base">{job.detailedDescription || job.shortDescription}</p>
+            </div>
+
+            {job.responsibilities.length > 0 && (
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Key Responsibilities</h2>
+                <ul className="list-disc list-inside text-gray-700 space-y-1 sm:space-y-2 text-sm sm:text-base">
+                  {job.responsibilities.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {job.skills.length > 0 && (
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Skills Required</h2>
+                <ul className="list-disc list-inside text-gray-700 space-y-1 sm:space-y-2 text-sm sm:text-base">
+                  {job.skills.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="mb-4 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Contact Information</h2>
+              <div className="space-y-1 sm:space-y-2 text-gray-700 text-sm sm:text-base">
+                <div className="flex items-center">
+                  <FaEnvelope className="mr-2 text-gray-500 flex-shrink-0" />
+                  <span className="break-words">{job.contactEmail || "Not provided"}</span>
+                </div>
+                <div className="flex items-center">
+                  <FaEnvelope className="mr-2 text-gray-500 flex-shrink-0" />
+                  <span>{job.contactPhone || "Not provided"}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      </div>
-      {/* Apply Form (Separate Component) */}
-            {showApplyForm && <ApplyForm job={selectedJob} onClose={closeForm} onSubmit={handleFormSubmit} />}
-      
-            {/* Success Modal (Separate Component) */}
-            {showSuccessModal && <SuccessModal onClose={closeSuccessModal} />}
     </>
   );
 }

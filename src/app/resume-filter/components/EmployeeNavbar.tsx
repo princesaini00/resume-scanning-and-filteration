@@ -4,8 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { FaUserCircle } from "react-icons/fa"; // Profile icon
 import { useState, useRef, useEffect } from "react"; // For managing dropdown state and click outside logic
+import { useSession, signOut } from "next-auth/react"; // Import these from next-auth/react
+import { usePathname, useRouter } from "next/navigation";
 
 export default function UploadNavbar() {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown state
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the dropdown
 
@@ -26,12 +30,60 @@ export default function UploadNavbar() {
     };
   }, []);
 
- 
+  // Fully clear the session and force redirect
+  const forceLogout = () => {
+    // Clear any local storage items that might persist session data
+    localStorage.clear();
+    
+    // Clear session cookies by setting expiry to past date
+    document.cookie.split(";").forEach((cookie) => {
+      const name = cookie.split("=")[0].trim();
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    });
+
+    // Redirect to admin login
+    if (session?.user?.role === 'admin') {
+      window.location.href = '/admin-login?logout=true&t=' + Date.now();
+    } else {
+      window.location.href = '/?logout=true&t=' + Date.now();
+    }
+  };
+
+  // Handle logout function - Complete session termination approach
+  const handleLogout = async () => {
+    try {
+      setIsDropdownOpen(false);
+      
+      // For admins, we need a special approach
+      if (session?.user?.role === 'admin') {
+        // Call signOut to clear the session
+        await signOut({ redirect: false });
+        
+        // Then force complete cleanup and redirect
+        setTimeout(forceLogout, 100);
+      } else {
+        // For regular users, trigger signOut with redirect
+        await signOut({ redirect: false });
+        setTimeout(forceLogout, 100);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      // If the normal signOut fails, fall back to our force logout
+      forceLogout();
+    }
+  };
+
   return (
-    <nav className="flex justify-between items-center p-4 bg-white relative">
+    <nav className="flex justify-between items-center p-4 bg-white relative shadow">
       {/* Left: Logo */}
       <Link href="/">
-        <Image src="/images/logo.png" alt="Logo" width={150} height={50} />
+        <Image 
+          src="/images/logo.png" 
+          alt="Logo" 
+          width={120} 
+          height={40} 
+          className="w-[100px] h-auto md:w-[150px] md:h-[100%]" 
+        />
       </Link>
 
       {/* Right: Profile Icon with Dropdown */}
@@ -45,28 +97,17 @@ export default function UploadNavbar() {
 
         {/* Dropdown Menu */}
         {isDropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
-            <Link
-              href="/profile"
-              className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              onClick={() => setIsDropdownOpen(false)}
-            >
-              View Profile
-            </Link>
-            <Link
-              href="/settings"
-              className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              onClick={() => setIsDropdownOpen(false)}
-            >
-              Settings
-            </Link>
+          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            <div className="block px-4 py-2 text-gray-700 border-b border-gray-200 text-sm md:text-base truncate">
+              {session?.user?.email || "Admin"}
+              {session?.user?.role === 'admin' && (
+                <span className="ml-1 text-xs font-semibold text-red-500">(Admin)</span>
+              )}
+            </div>
+            
             <button
-              onClick={() => {
-                // Handle logout logic here
-                console.log("User logged out");
-                setIsDropdownOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm md:text-base"
             >
               Logout
             </button>
